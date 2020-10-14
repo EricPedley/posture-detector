@@ -14,18 +14,5 @@
 # model.fit(x,y,epochs=1000)
 
 # print(model.predict([-3]))
-import tensorflow as tf
-from tensorflow import keras
-from keras import layers
-
-# datagen = ImageDataGenerator()
-# train_it = datagen.flow_from_directory('data/train',class_mode='binary',color_mode="grayscale",target_size=(160,90))
-train_ds = tf.keras.preprocessing.image_dataset_from_directory(
-    "data",
-    validation_split=0.2,
-    subset="training",
-    seed=1337,
-    color_mode="grayscale",
-    image_size=(160,90),
-    batch_size=16
-)
+from depth_predict import predict
+predict.main()

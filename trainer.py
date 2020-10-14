@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from model_example import make_model
 model = make_model(input_shape=(80,60) + (1,), num_classes=2)
-epochs = 25
+epochs = 10
 train_ds = tf.keras.preprocessing.image_dataset_from_directory(
     "data",
     validation_split=0.2,

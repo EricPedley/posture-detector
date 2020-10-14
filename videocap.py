@@ -1,16 +1,29 @@
 import cv2
 import numpy as np
 import time
+from matplotlib import pyplot
 
-predicting=True
+predicting=False
 writing=False
+depth=True
+
+net=sess=input_node=predictDepth=(None,None,None,None)
+
+if depth:
+    from depth_predict import predict
+    predictDepth=predict.predict
+    net,sess,input_node=predict.init_net("depth_predict\\NYU_FCRN-checkpoint\\NYU_FCRN.ckpt")
+
 if predicting:
     from model_example import make_model
     model = make_model(input_shape=(80,60) + (1,), num_classes=2)
     model.load_weights("save_at_10.h5")
+    print(model.input_shape)
 
 vc=cv2.VideoCapture(0)
-cv2.namedWindow("preview")
+cv2.namedWindow("raw")
+backsub = cv2.createBackgroundSubtractorKNN()#createBackgroundSubtractorMOG2()
+
 width=80
 height=60
 if vc.isOpened(): # try to get the first frame
@@ -20,15 +33,33 @@ else:
 def capture(directory):
     while True:
         rval, frame = vc.read()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        cv2.imshow("preview", frame)
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #fgmask = backsub.apply(frame)
+        cv2.imshow("raw", frame)
+        if depth:
+            frame = cv2.resize(frame,(304,228),interpolation=cv2.INTER_AREA)
+            gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            frame=np.expand_dims(frame,0)
+            prediction = predictDepth(net,sess,input_node,frame)[0,:,:,0]#128x160
+            #print(prediction[0][0])
+            #prediction=(prediction/256).astype(np.uint8)
+            prediction=cv2.resize(prediction,(304,228),interpolation=cv2.INTER_AREA)
+            prediction=(0.6-prediction/np.amax(prediction))
+            np.round(prediction)
+            frame = np.multiply(gray,prediction)#np.concatenate((np.expand_dims(gray,2), np.expand_dims(np.multiply(gray,prediction),2),np.expand_dims(gray,2)),axis=2)
+            cv2.imshow("highlighted depth",frame/255)
+            #cv2.imshow("combined",combined/255)
+            #cv2.imshow("depthmap",prediction)    
         frame= cv2.resize(frame,(width,height),interpolation=cv2.INTER_AREA)
         if writing:
             path='data\\{directory}\\img{time}.jpg'.format(time=round(time.time()*1000),directory=directory)
             cv2.imwrite(path,frame)
         if predicting:
+            frame=np.expand_dims(frame,axis=2)
             frame=np.expand_dims(frame,axis=0)
-            print(model.predict(frame))
+            frame=np.swapaxes(frame,1,2)
+            final_prediction=model.predict(frame)[0][0]
+            print(final_prediction)
         key = cv2.waitKey(500)
         if key == 32 or key == 27 or key == 13: # exit on space or esc or enter
             break

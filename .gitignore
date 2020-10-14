@@ -1,2 +1,5 @@
 data
 *.h5
+__pycache__
+NYU_FCRN-checkpoint
+*.jpg

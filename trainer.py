@@ -1,11 +1,11 @@
 import tensorflow as tf
 from tensorflow import keras
 from model_example import make_model
-model = make_model(input_shape=(80,60) + (1,), num_classes=2)
+model = make_model(input_shape=(80,60,1), num_classes=2)
 epochs = 10
 train_ds = tf.keras.preprocessing.image_dataset_from_directory(
     "data",
-    validation_split=0.2,
+    validation_split=0.3,
     subset="training",
     seed=1337,
     image_size=(80,60),
@@ -15,7 +15,7 @@ train_ds = tf.keras.preprocessing.image_dataset_from_directory(
 )
 val_ds = tf.keras.preprocessing.image_dataset_from_directory(
     "data",
-    validation_split=0.2,
+    validation_split=0.3,
     subset="validation",
     seed=1337,
     image_size=(80,60),

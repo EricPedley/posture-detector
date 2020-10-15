@@ -3,7 +3,7 @@ import numpy as np
 import time
 from matplotlib import pyplot
 
-predicting=False
+predicting=True
 writing=False
 depth=True
 
@@ -44,11 +44,16 @@ def capture(directory):
             #print(prediction[0][0])
             #prediction=(prediction/256).astype(np.uint8)
             prediction=cv2.resize(prediction,(304,228),interpolation=cv2.INTER_AREA)
-            prediction=(0.6-prediction/np.amax(prediction))
-            np.round(prediction)
-            frame = np.multiply(gray,prediction)#np.concatenate((np.expand_dims(gray,2), np.expand_dims(np.multiply(gray,prediction),2),np.expand_dims(gray,2)),axis=2)
-            cv2.imshow("highlighted depth",frame/255)
-            #cv2.imshow("combined",combined/255)
+            prediction = (1/(prediction/np.amin(prediction)))
+            mask=prediction-0.2#closest values are 1, so anything above 0.5+x is included
+            mask=np.round(mask)
+            #frame = np.multiply(gray,prediction)
+            masked = np.multiply(gray,mask)
+            #pyplot.imshow(masked)
+            #pyplot.show()
+            frame = masked#np.concatenate((np.expand_dims(gray,2), np.expand_dims(masked,2),np.expand_dims(prediction*255,2)),axis=2)
+            #cv2.imshow("highlighted depth",prediction/255)
+            cv2.imshow("combined",frame/255)
             #cv2.imshow("depthmap",prediction)    
         frame= cv2.resize(frame,(width,height),interpolation=cv2.INTER_AREA)
         if writing:

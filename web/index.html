@@ -4,29 +4,39 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
     <!-- Load BodyPix -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
+    <script>const clog = console.log;</script>
  </head>
 
   <body>
-    <img id='image' src='person.jpg' crossorigin='anonymous'/>
+    <video id="vid" autoplay='true'>
+  </video>
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    const img = document.getElementById('image');
-
-    async function loadAndPredict() {
-      const net = await bodyPix.load(/** optional arguments, see below **/);
-
-      /**
-       * One of (see documentation below):
-       *   - net.segmentPerson
-       *   - net.segmentPersonParts
-       *   - net.segmentMultiPerson
-       *   - net.segmentMultiPersonParts
-       * See documentation below for details on each method.
-       */
-      const segmentation = await net.segmentPerson(img);
-      console.log(segmentation);
+    const video = document.querySelector('#vid');
+    video.onready = ()=>{console.log("bruh")}
+    if(navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({video:true}).then((stream)=>{
+        video.srcObject=stream;
+      }).catch(alert);
     }
-    loadAndPredict();
+
+    // const img = document.getElementById('image');
+
+    // async function loadAndPredict() {
+    //   const net = await bodyPix.load(/** optional arguments, see below **/);
+
+    //   /**
+    //    * One of (see documentation below):
+    //    *   - net.segmentPerson
+    //    *   - net.segmentPersonParts
+    //    *   - net.segmentMultiPerson
+    //    *   - net.segmentMultiPersonParts
+    //    * See documentation below for details on each method.
+    //    */
+    //   const segmentation = await net.segmentPerson(img);
+    //   console.log(segmentation);
+    // }
+    // loadAndPredict();
   </script>
 </html>

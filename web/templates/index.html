@@ -1,0 +1,35 @@
+<html>
+
+<head>
+  <!-- Load TensorFlow.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
+  <!-- Load BodyPix -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
+  <script>const clog = console.log;</script>
+</head>
+
+<body>
+  <video id="vid" autoplay='true'></video>
+  <canvas id="canvas" width="304" height="228"></canvas>
+  <button id="button">take pic</button>
+</body>
+<script>
+  const video = document.querySelector('#vid');
+  video.onready = () => { console.log("bruh") }
+  if (navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+      video.srcObject = stream;
+    }).catch(alert);
+  }
+  const context = canvas.getContext('2d')
+  document.querySelector("#button").addEventListener("click", () => {
+    context.drawImage(document.getElementById("vid"), 0, 0, 304, 228)
+    const options = {
+      method: "POST",
+      body: canvas.toDataURL()
+    }
+    fetch("/frame", options).then(res => res.text()).then(text=>{console.log(text)})
+  });
+</script>
+
+</html>

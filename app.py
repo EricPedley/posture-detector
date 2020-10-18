@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 import numpy as np
 import cv2
 from base64 import b64decode
-from matplotlib import pyplot as plt
 
 width=80
 height=60

@@ -14,5 +14,4 @@
 # model.fit(x,y,epochs=1000)
 
 # print(model.predict([-3]))
-from depth_predict import predict
-predict.main()
+import tensorflow as tf

@@ -14,18 +14,17 @@ if depth:
     predictDepth=predict.predict
     net,sess,input_node=predict.init_net("depth_predict\\NYU_FCRN-checkpoint\\NYU_FCRN.ckpt")
 
+width=80
+height=60
 if predicting:
     from model_example import make_model
-    model = make_model(input_shape=(80,60) + (1,), num_classes=2)
+    model = make_model(input_shape=(width,height) + (1,), num_classes=2)
     model.load_weights("save_at_10.h5")
     print(model.input_shape)
 
 vc=cv2.VideoCapture(0)
 cv2.namedWindow("raw")
-backsub = cv2.createBackgroundSubtractorKNN()#createBackgroundSubtractorMOG2()
 
-width=80
-height=60
 if vc.isOpened(): # try to get the first frame
     rval, frame = vc.read()
 else:
@@ -40,6 +39,7 @@ def capture(directory):
             frame = cv2.resize(frame,(304,228),interpolation=cv2.INTER_AREA)
             gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
             frame=np.expand_dims(frame,0)
+            print(frame.shape)
             prediction = predictDepth(net,sess,input_node,frame)[0,:,:,0]#128x160
             #print(prediction[0][0])
             #prediction=(prediction/256).astype(np.uint8)
@@ -51,9 +51,10 @@ def capture(directory):
             masked = np.multiply(gray,mask)
             #pyplot.imshow(masked)
             #pyplot.show()
-            frame = masked#np.concatenate((np.expand_dims(gray,2), np.expand_dims(masked,2),np.expand_dims(prediction*255,2)),axis=2)
+            frame = masked
+            combined = np.concatenate((np.expand_dims(gray,2), np.expand_dims(masked,2),np.expand_dims(prediction*255,2)),axis=2)
             #cv2.imshow("highlighted depth",prediction/255)
-            cv2.imshow("combined",frame/255)
+            cv2.imshow("combined",combined/255)
             #cv2.imshow("depthmap",prediction)    
         frame= cv2.resize(frame,(width,height),interpolation=cv2.INTER_AREA)
         if writing:

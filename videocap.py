@@ -3,9 +3,9 @@ import numpy as np
 import time
 from matplotlib import pyplot
 
-predicting=True
+predicting=False
 writing=False
-depth=True
+depth=False
 
 net=sess=input_node=predictDepth=(None,None,None,None)
 
@@ -55,8 +55,13 @@ def capture(directory):
             combined = np.concatenate((np.expand_dims(gray,2), np.expand_dims(masked,2),np.expand_dims(prediction*255,2)),axis=2)
             #cv2.imshow("highlighted depth",prediction/255)
             cv2.imshow("combined",combined/255)
-            #cv2.imshow("depthmap",prediction)    
-        frame= cv2.resize(frame,(width,height),interpolation=cv2.INTER_AREA)
+            #cv2.imshow("depthmap",prediction)   
+        print(frame.shape) 
+        gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+        print(gray.shape)
+        gray= cv2.resize(gray,(width,height),interpolation=cv2.INTER_AREA)
+        print(gray.shape)
+        cv2.imshow("small",gray)
         if writing:
             path='data\\{directory}\\img{time}.jpg'.format(time=round(time.time()*1000),directory=directory)
             cv2.imwrite(path,frame)

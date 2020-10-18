@@ -5,9 +5,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
   <!-- Load BodyPix -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
-  <!-- Load numjs-->
-  <script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script>
-  <script>const clog = console.log;</script>
 </head>
 
 <body>
@@ -40,10 +37,6 @@
     const context = canvas.getContext('2d')
     document.querySelector("#button").addEventListener("click", () => {
       predict(canvas).then(segmentation => {
-        let n = nj.array(segmentation.data,dtype="uint8").reshape(480,640)
-        n = nj.images.resize(n,60,80)
-        clog(n)
-        //console.log(nj.array(canvas.toDataURL()))
         const options = {
           headers: {
             "Content-Type": "application/json"

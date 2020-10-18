@@ -1,6 +1,7 @@
 data
-*.h5
+save_at_*
 __pycache__
 NYU_FCRN-checkpoint
 *.jpg
 node_modules
+training_files

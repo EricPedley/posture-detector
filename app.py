@@ -6,11 +6,11 @@ from matplotlib import pyplot as plt
 
 width=80
 height=60
-predicting=True
+predicting=False
 if predicting:
-    from model_example import make_model
+    from model import make_model
     model = make_model(input_shape=(width,height) + (1,), num_classes=2)
-    model.load_weights("save_at_10.h5")
+    model.load_weights("model_weights.h5")
 
 app = Flask(__name__)
 
@@ -35,7 +35,7 @@ def frame():
             frame=np.swapaxes(frame,1,2)
             final_prediction=model.predict(frame)[0][0]
             return str(final_prediction)
-    return "got it"
+    return "0.5"
     
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')

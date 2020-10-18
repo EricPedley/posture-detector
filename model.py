@@ -1,34 +1,56 @@
 import tensorflow as tf
 from tensorflow import keras
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-train_ds = tf.keras.preprocessing.image_dataset_from_directory(
-    "data",
-    validation_split=0.2,
-    subset="training",
-    seed=1337,
-    image_size=(80,60),
-    color_mode="grayscale",
-    batch_size=16,
-    shuffle=True
-)
-val_ds = tf.keras.preprocessing.image_dataset_from_directory(
-    "data",
-    validation_split=0.2,
-    subset="validation",
-    seed=1337,
-    image_size=(80,60),
-    color_mode="grayscale",
-    batch_size=16,
-    shuffle=True
-)
-model = keras.Sequential()
-# block 1
-model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', input_shape=(80, 60, 1)))
-model.add(MaxPooling2D((2, 2)))
+from keras import layers
 
-model.add(Flatten())
-model.add(Dense(128,activation='relu',kernel_initializer='he_uniform'))
-model.add(Dense(1,activation='sigmoid'))
+# datagen = ImageDataGenerator()
+# train_it = datagen.flow_from_directory('data/train',class_mode='binary',color_mode="grayscale",target_size=(160,90))
 
-model.compile(optimizer=keras.optimizers.SGD(lr=0.001,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
-model.fit(train_ds,epochs=20,validation_data=val_ds)
+
+
+def make_model(input_shape, num_classes):
+    inputs = keras.Input(shape=input_shape)
+    # Image augmentation block
+    #x = data_augmentation(inputs)
+
+    # Entry block
+    x = layers.Conv2D(32, 3, strides=2, padding="same")(inputs)
+    #x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+
+    x = layers.Conv2D(64, 3, padding="same")(x)
+    #x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+
+    previous_block_activation = x  # Set aside residual
+
+    for size in [128, 256]:
+        x = layers.Activation("relu")(x)
+        x = layers.SeparableConv2D(size, 3, padding="same")(x)
+        #x = layers.BatchNormalization()(x)
+
+        x = layers.Activation("relu")(x)
+        x = layers.SeparableConv2D(size, 3, padding="same")(x)
+        #x = layers.BatchNormalization()(x)
+
+        x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+
+        # Project residual
+        residual = layers.Conv2D(size, 1, strides=2, padding="same")(
+            previous_block_activation
+        )
+        x = layers.add([x, residual])  # Add back residual
+        previous_block_activation = x  # Set aside next residual
+
+    x = layers.SeparableConv2D(1024, 3, padding="same")(x)
+    #x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+
+    x = layers.GlobalAveragePooling2D()(x)
+    activation = "sigmoid"
+    units = 1
+
+    x = layers.Dropout(0.5)(x)
+    outputs = layers.Dense(units, activation=activation)(x)
+    return keras.Model(inputs, outputs)
+
+

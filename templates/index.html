@@ -1,18 +1,41 @@
 <html>
 
 <head>
+  <title>Posture Monitor</title>
+  <link rel="icon" href = "{{ url_for('static', filename = 'favicon.ico') }}">
   <!-- Load TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
   <!-- Load BodyPix -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
 </head>
+<style>
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    background-color:aliceblue
+  }
+
+  #loop:hover {
+    cursor: pointer
+  }
+
+  button {
+    background-color:transparent;
+    border-radius:0; 
+    border:2px solid black;
+  }
+</style>
 
 <body>
-  <video id="vid" autoplay='true'></video>
-  <div id="rec" style="position:absolute; left:0; top:0; background-color:red">recording</div>
+  <div style="text-align:center">
+    <h1 style="margin:0; padding: 10px">Posture Monitor</h1>
+    <div style="background-color:black"><video id="vid" autoplay='true'></video></div>
+    <button style=" margin-top:10px; " id="loop">
+      <h3>Loading...</h3>
+    </button>
+    <div id="rec" style="font-size:xx-large">Prediction: <span id = "prediction">Loading...</span></div>
+  </div>
   <canvas id="canvas" width="640" height="480" style="display:none"></canvas>
-  <button id="button">take pic</button>
-  <button id="loop">toggle loop</button>
 </body>
 <script>
   document.getElementById("rec").hidden = true;
@@ -53,17 +76,21 @@
     }).catch(alert);
   }
   bodyPix.load().then(net => {
-    console.log("net is ready")
-    document.querySelector("#button").addEventListener("click", () => {
-      getPostureClass(net).then(console.log)
-    });
-    document.getElementById("loop").addEventListener("click", () => {
+    const loop = document.getElementById("loop");
+    loop.innerHTML = "<h3>Start Monitoring</h3>";
+    loop.addEventListener("click", () => {
+      let audio = new Audio("{{ url_for('static', filename = 'inputaudio.mp3') }}");
+      audio.play()
       looping = !looping;
       if (looping) {
-        interval = setInterval(() => { getPostureClass(net).then(console.log) }, 1000);
+        document.getElementById("loop").innerHTML = "<h3>Stop Monitoring</h3>";
+        interval = setInterval(() => { getPostureClass(net).then((prediction)=>{
+          document.getElementById("prediction").innerHTML=prediction;
+        }) }, 1000);
         document.getElementById("rec").hidden = false;
       }
       else {
+        loop.innerHTML = "<h3>Start Monitoring</h3>";
         clearInterval(interval);
         document.getElementById("rec").hidden = true;
       }

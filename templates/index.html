@@ -9,10 +9,42 @@
 
 <body>
   <video id="vid" autoplay='true'></video>
-  <canvas id="canvas" width="640" height="480"></canvas>
+  <div id="rec" style="position:absolute; left:0; top:0; background-color:red">recording</div>
+  <canvas id="canvas" width="640" height="480" style="display:none"></canvas>
   <button id="button">take pic</button>
+  <button id="loop">toggle loop</button>
 </body>
 <script>
+  document.getElementById("rec").hidden = true;
+  var interval;
+  var looping = false;
+  async function predict(net, img) {
+    const config = {
+      flipHorizontal: "true",
+      internalResolution: "low",
+      segmentationThreshold: 0.7,
+      maxDetections: 5,
+      scoreThreshold: 0.3,
+      nmsRadius: 20
+    }
+    const segmentation = await net.segmentPerson(img)
+    return segmentation;
+  }
+  function getPostureClass(net) {
+    const context = canvas.getContext('2d')
+    context.drawImage(document.getElementById("vid"), 0, 0, 640, 480)
+    return predict(net, canvas).then(segmentation => {
+      const options = {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify({ mask: segmentation.data, img: canvas.toDataURL() })
+      }
+      return fetch("/frame", options).then(r => r.text())
+    });
+  }
+
   const video = document.querySelector('#vid');
   video.onready = () => { console.log("bruh") }
   if (navigator.mediaDevices.getUserMedia) {
@@ -22,32 +54,20 @@
   }
   bodyPix.load().then(net => {
     console.log("net is ready")
-    async function predict(img) {
-      const config = {
-        flipHorizontal: "true",
-        internalResolution: "low",
-        segmentationThreshold: 0.7,
-        maxDetections: 5,
-        scoreThreshold: 0.3,
-        nmsRadius: 20
-      }
-      const segmentation = await net.segmentPerson(img)
-      return segmentation;
-    }
-    const context = canvas.getContext('2d')
     document.querySelector("#button").addEventListener("click", () => {
-      predict(canvas).then(segmentation => {
-        const options = {
-          headers: {
-            "Content-Type": "application/json"
-          },
-          method: "POST",
-          body: JSON.stringify({ mask: segmentation.data, img: canvas.toDataURL() })
-        }
-        fetch("/frame", options).then(r => r.text()).then(console.log)
-      });
-      context.drawImage(document.getElementById("vid"), 0, 0, 640, 480)
+      getPostureClass(net).then(console.log)
     });
+    document.getElementById("loop").addEventListener("click", () => {
+      looping = !looping;
+      if (looping) {
+        interval = setInterval(() => { getPostureClass(net).then(console.log) }, 1000);
+        document.getElementById("rec").hidden = false;
+      }
+      else {
+        clearInterval(interval);
+        document.getElementById("rec").hidden = true;
+      }
+    })
   })
 
 </script>

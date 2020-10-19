@@ -6,3 +6,4 @@ NYU_FCRN-checkpoint
 node_modules
 training_files
 trainer.py
+old*

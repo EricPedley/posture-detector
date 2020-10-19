@@ -2,7 +2,7 @@
 
 <head>
   <title>Posture Buddy</title>
-  <link rel="icon" href = "{{ url_for('static', filename = 'favicon.ico') }}">
+  <link rel="icon" href="{{ url_for('static', filename = 'favicon.ico') }}">
   <!-- Load TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
   <!-- Load BodyPix -->
@@ -12,7 +12,7 @@
   body {
     font-family: Arial, Helvetica, sans-serif;
     margin: 0;
-    background-color:aliceblue
+    background-color: aliceblue
   }
 
   button:hover {
@@ -20,15 +20,16 @@
   }
 
   button {
-    background-color:transparent;
-    border-radius:0; 
-    border:2px solid black;
+    background-color: transparent;
+    border-radius: 0;
+    border: 2px solid black;
   }
 </style>
 
 <body>
   <div style="text-align:center">
-    <h1 style="margin:0; padding: 10px"><img src="{{ url_for('static', filename = 'yoga dude icon.png') }}" style="height:32px; vertical-align: middle;"></img>Posture Buddy</h1>
+    <h1 style="margin:0; padding: 10px"><img src="{{ url_for('static', filename = 'yoga dude icon.png') }}"
+        style="height:32px; vertical-align: middle;"></img>Posture Buddy</h1>
     <div style="background-color:black"><video id="vid" autoplay='true'></video></div>
     <button style=" margin-top:10px; " id="loop">
       <h3>Loading...</h3>
@@ -40,7 +41,9 @@
       <h3>Add bad posture data</h3>
     </button>
 
-    <div id="rec" style="font-size:xx-large; margin-top:10px">Prediction: <span id = "prediction">Loading...</span></div>
+    <div id="rec" style="font-size:xx-large; margin-top:10px">Prediction: <span id="prediction">Loading...</span>
+      <div>10 Frame Average: <span id="average">Loading...</span></div>
+    </div>
   </div>
   <canvas id="canvas" width="640" height="480" style="display:none"></canvas>
 </body>
@@ -60,7 +63,7 @@
     const segmentation = await net.segmentPerson(img)
     return segmentation;
   }
-  function getPostureClass(net,mode) {
+  function getPostureClass(net, mode) {
     const context = canvas.getContext('2d')
     context.drawImage(document.getElementById("vid"), 0, 0, 640, 480)
     return predict(net, canvas).then(segmentation => {
@@ -75,7 +78,8 @@
     });
   }
   const postureArray = [];
-  var cumulativeScore=0;
+  var cumulativeScore = 0;
+  var reminderCooldown = 0;
   const video = document.querySelector('#vid');
   video.onready = () => { console.log("bruh") }
   if (navigator.mediaDevices.getUserMedia) {
@@ -85,20 +89,32 @@
   }
   bodyPix.load().then(net => {
     function handlePrediction(mode) {
-      interval = setInterval(() => { getPostureClass(net,mode).then((prediction)=>{
-          document.getElementById("prediction").innerHTML=prediction;
-          postureArray.push(Number(prediction))
-          cumulativeScore+=Number(prediction)
-          if(postureArray.length>10)
-            cumulativeScore-=postureArray.shift()
-          console.log(cumulativeScore)
-          document.getElementById("prediction").style.backgroundColor=`hsl(${141 * (1-prediction)},${76 + 24 * (prediction)}%, ${48 + 2 * (prediction)}%)`
-          if(cumulativeScore>5)
-            new Audio("{{ url_for('static', filename = 'sit up.mp3') }}").play();
+      document.getElementById("rec").hidden = false;
+      getPostureClass(net, mode).then(prediction => {
+        document.getElementById("prediction").innerHTML = prediction;
+        postureArray.push(Number(prediction))
+        cumulativeScore += Number(prediction)
+        if (postureArray.length > 10)
+          cumulativeScore -= postureArray.shift()
 
-        }) }, 1000);
-        document.getElementById("rec").hidden = false;
-        return interval
+        cumulativePercent = cumulativeScore / 10
+        document.getElementById("average").innerHTML = cumulativeScore;
+        document.getElementById("average").style.backgroundColor = `hsl(${141 * (1 - cumulativePercent)},${76 + 24 * (cumulativePercent)}%, ${48 + 2 * (cumulativePercent)}%)`
+        document.getElementById("prediction").style.backgroundColor = `hsl(${141 * (1 - prediction)},${76 + 24 * (prediction)}%, ${48 + 2 * (prediction)}%)`
+
+        if (cumulativeScore > 5 && prediction>0.5) {
+          reminderCooldown++;
+          if (reminderCooldown > 5) {
+            reminderCooldown = 0;
+            console.log("playing audio")
+            new Audio("{{ url_for('static', filename = 'sit up.mp3') }}").play();
+          }
+        }
+        if (looping) {
+          handlePrediction(mode);
+        }
+      });
+
     }
     const loop = document.getElementById("loop");
     loop.innerHTML = "<h3>Start Monitoring</h3>";
@@ -106,30 +122,22 @@
       looping = !looping;
       if (looping) {
         document.getElementById("loop").innerHTML = "<h3>Stop Monitoring</h3>";
-        interval=handlePrediction("predict")
+        handlePrediction("predict")
       }
       else {
         loop.innerHTML = "<h3>Start Monitoring</h3>";
-        clearInterval(interval);
         document.getElementById("rec").hidden = true;
       }
     });
-    document.getElementById("good").addEventListener("click",()=> {
+    document.getElementById("good").addEventListener("click", () => {
       looping = !looping;
-      if (looping) {
-        interval=handlePrediction("good")
-      }
-      else {
-        clearInterval(interval);
-      }
+      if (looping)
+        handlePrediction("good")
     });
-    document.getElementById("bad").addEventListener("click",()=> {
+    document.getElementById("bad").addEventListener("click", () => {
       looping = !looping;
       if (looping) {
-        interval=handlePrediction("bad")
-      }
-      else {
-        clearInterval(interval);
+        handlePrediction("bad")
       }
     });
   })

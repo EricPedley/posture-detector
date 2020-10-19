@@ -4,9 +4,9 @@ import cv2
 from base64 import b64decode
 import random
 width=80
-height=60
+height=int(width*3/4)
 predicting=True
-writing=False
+writing=True
 if writing:
     import time
 if predicting:

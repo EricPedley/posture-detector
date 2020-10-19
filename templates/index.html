@@ -28,7 +28,7 @@
 
 <body>
   <div style="text-align:center">
-    <h1 style="margin:0; padding: 10px">Posture Buddy</h1>
+    <h1 style="margin:0; padding: 10px"><img src="{{ url_for('static', filename = 'yoga dude icon.png') }}" style="height:32px; vertical-align: middle;"></img>Posture Buddy</h1>
     <div style="background-color:black"><video id="vid" autoplay='true'></video></div>
     <button style=" margin-top:10px; " id="loop">
       <h3>Loading...</h3>
@@ -40,7 +40,7 @@
       <h3>Add bad posture data</h3>
     </button>
 
-    <div id="rec" style="font-size:xx-large">Prediction: <span id = "prediction">Loading...</span></div>
+    <div id="rec" style="font-size:xx-large; margin-top:10px">Prediction: <span id = "prediction">Loading...</span></div>
   </div>
   <canvas id="canvas" width="640" height="480" style="display:none"></canvas>
 </body>
@@ -92,6 +92,7 @@
           if(postureArray.length>10)
             cumulativeScore-=postureArray.shift()
           console.log(cumulativeScore)
+          document.getElementById("prediction").style.backgroundColor=`hsl(${141 * (1-prediction)},${76 + 24 * (prediction)}%, ${48 + 2 * (prediction)}%)`
           if(cumulativeScore>5)
             new Audio("{{ url_for('static', filename = 'sit up.mp3') }}").play();
 

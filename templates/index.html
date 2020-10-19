@@ -98,7 +98,7 @@
           cumulativeScore -= postureArray.shift()
 
         cumulativePercent = cumulativeScore / 10
-        document.getElementById("average").innerHTML = cumulativeScore;
+        document.getElementById("average").innerHTML = cumulativePercent;
         document.getElementById("average").style.backgroundColor = `hsl(${141 * (1 - cumulativePercent)},${76 + 24 * (cumulativePercent)}%, ${48 + 2 * (cumulativePercent)}%)`
         document.getElementById("prediction").style.backgroundColor = `hsl(${141 * (1 - prediction)},${76 + 24 * (prediction)}%, ${48 + 2 * (prediction)}%)`
 

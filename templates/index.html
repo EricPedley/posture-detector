@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title>Posture Monitor</title>
+  <title>Posture Buddy</title>
   <link rel="icon" href = "{{ url_for('static', filename = 'favicon.ico') }}">
   <!-- Load TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
@@ -15,7 +15,7 @@
     background-color:aliceblue
   }
 
-  #loop:hover {
+  button:hover {
     cursor: pointer
   }
 
@@ -28,11 +28,18 @@
 
 <body>
   <div style="text-align:center">
-    <h1 style="margin:0; padding: 10px">Posture Monitor</h1>
+    <h1 style="margin:0; padding: 10px">Posture Buddy</h1>
     <div style="background-color:black"><video id="vid" autoplay='true'></video></div>
     <button style=" margin-top:10px; " id="loop">
       <h3>Loading...</h3>
     </button>
+    <button style=" margin-top:10px; " id="good">
+      <h3>Add good posture data</h3>
+    </button>
+    <button style=" margin-top:10px; " id="bad">
+      <h3>Add bad posture data</h3>
+    </button>
+
     <div id="rec" style="font-size:xx-large">Prediction: <span id = "prediction">Loading...</span></div>
   </div>
   <canvas id="canvas" width="640" height="480" style="display:none"></canvas>
@@ -46,14 +53,14 @@
       flipHorizontal: "true",
       internalResolution: "low",
       segmentationThreshold: 0.7,
-      maxDetections: 5,
+      maxDetections: 1,
       scoreThreshold: 0.3,
       nmsRadius: 20
     }
     const segmentation = await net.segmentPerson(img)
     return segmentation;
   }
-  function getPostureClass(net) {
+  function getPostureClass(net,mode) {
     const context = canvas.getContext('2d')
     context.drawImage(document.getElementById("vid"), 0, 0, 640, 480)
     return predict(net, canvas).then(segmentation => {
@@ -62,12 +69,13 @@
           "Content-Type": "application/json"
         },
         method: "POST",
-        body: JSON.stringify({ mask: segmentation.data, img: canvas.toDataURL() })
+        body: JSON.stringify({ mode: mode, mask: segmentation.data, img: canvas.toDataURL() })
       }
       return fetch("/frame", options).then(r => r.text())
     });
   }
-
+  const postureArray = [];
+  var cumulativeScore=0;
   const video = document.querySelector('#vid');
   video.onready = () => { console.log("bruh") }
   if (navigator.mediaDevices.getUserMedia) {
@@ -76,25 +84,53 @@
     }).catch(alert);
   }
   bodyPix.load().then(net => {
+    function handlePrediction(mode) {
+      interval = setInterval(() => { getPostureClass(net,mode).then((prediction)=>{
+          document.getElementById("prediction").innerHTML=prediction;
+          postureArray.push(Number(prediction))
+          cumulativeScore+=Number(prediction)
+          if(postureArray.length>10)
+            cumulativeScore-=postureArray.shift()
+          console.log(cumulativeScore)
+          if(cumulativeScore>5)
+            new Audio("{{ url_for('static', filename = 'sit up.mp3') }}").play();
+
+        }) }, 1000);
+        document.getElementById("rec").hidden = false;
+        return interval
+    }
     const loop = document.getElementById("loop");
     loop.innerHTML = "<h3>Start Monitoring</h3>";
     loop.addEventListener("click", () => {
-      let audio = new Audio("{{ url_for('static', filename = 'inputaudio.mp3') }}");
-      audio.play()
       looping = !looping;
       if (looping) {
         document.getElementById("loop").innerHTML = "<h3>Stop Monitoring</h3>";
-        interval = setInterval(() => { getPostureClass(net).then((prediction)=>{
-          document.getElementById("prediction").innerHTML=prediction;
-        }) }, 1000);
-        document.getElementById("rec").hidden = false;
+        interval=handlePrediction("predict")
       }
       else {
         loop.innerHTML = "<h3>Start Monitoring</h3>";
         clearInterval(interval);
         document.getElementById("rec").hidden = true;
       }
-    })
+    });
+    document.getElementById("good").addEventListener("click",()=> {
+      looping = !looping;
+      if (looping) {
+        interval=handlePrediction("good")
+      }
+      else {
+        clearInterval(interval);
+      }
+    });
+    document.getElementById("bad").addEventListener("click",()=> {
+      looping = !looping;
+      if (looping) {
+        interval=handlePrediction("bad")
+      }
+      else {
+        clearInterval(interval);
+      }
+    });
   })
 
 </script>

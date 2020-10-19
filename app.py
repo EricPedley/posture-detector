@@ -2,10 +2,13 @@ from flask import Flask, render_template, request
 import numpy as np
 import cv2
 from base64 import b64decode
-
+import random
 width=80
 height=60
-predicting=False
+predicting=True
+writing=False
+if writing:
+    import time
 if predicting:
     from model import make_model
     model = make_model(input_shape=(width,height) + (1,), num_classes=2)
@@ -28,13 +31,18 @@ def frame():
     img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     combined = np.multiply(img,mask)
     frame = cv2.resize(combined,(width,height),interpolation=cv2.INTER_AREA)
+    if writing:
+            if json["mode"] != "predict":
+                directory=json["mode"]
+                path='data\\{directory}\\img{time}.jpg'.format(time=round(time.time()*1000),directory=directory)
+                cv2.imwrite(path,frame)
     if predicting:
             frame=np.expand_dims(frame,axis=2)
             frame=np.expand_dims(frame,axis=0)
             frame=np.swapaxes(frame,1,2)
             final_prediction=model.predict(frame)[0][0]
-            return str(final_prediction)
-    return "0.5"
+            return str(round(final_prediction,3))
+    return str(round(random.random(),3))
     
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=False,host='0.0.0.0')

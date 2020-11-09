@@ -4,9 +4,6 @@ __pycache__
 NYU_FCRN-checkpoint
 *.jpg
 node_modules
-training_files
-trainer.py
-old*
 Lib
 Scripts
-.vscode
+settings.json

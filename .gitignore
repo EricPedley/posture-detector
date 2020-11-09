@@ -4,3 +4,6 @@ __pycache__
 NYU_FCRN-checkpoint
 *.jpg
 node_modules
+Lib
+Scripts
+settings.json

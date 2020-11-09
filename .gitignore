@@ -7,3 +7,6 @@ node_modules
 training_files
 trainer.py
 old*
+Lib
+Scripts
+.vscode
